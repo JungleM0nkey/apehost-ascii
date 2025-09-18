@@ -1,0 +1,312 @@
+/**
+ * ASCII Art Studio - Cloudflare Worker
+ * Serves static assets and handles routing for the ASCII art application
+ */
+
+import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler';
+
+// Configure asset handling with error checking
+const assetManifest = typeof __STATIC_CONTENT_MANIFEST !== 'undefined' 
+  ? JSON.parse(__STATIC_CONTENT_MANIFEST) 
+  : {};
+
+// Debug function for production troubleshooting
+function debugLog(message, data = null) {
+  console.log(`[ASCII-WORKER] ${message}`, data ? JSON.stringify(data) : '');
+}
+
+/**
+ * ES Module Worker Export
+ */
+export default {
+  async fetch(request, env, ctx) {
+    const event = { 
+      request, 
+      waitUntil: ctx.waitUntil.bind(ctx),
+      env // Pass environment for KV access
+    };
+    return await handleRequest(event);
+  }
+};
+
+/**
+ * Handle incoming requests
+ */
+async function handleRequest(event) {
+  const url = new URL(event.request.url);
+  
+  try {
+    // Handle API routes (if needed in future)
+    if (url.pathname.startsWith('/api/')) {
+      return handleApiRequest(event.request);
+    }
+    
+    // Serve static assets
+    return await handleAssetRequest(event);
+    
+  } catch (e) {
+    console.error('Request handling error:', e);
+    return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+/**
+ * Handle static asset requests
+ */
+async function handleAssetRequest(event) {
+  const url = new URL(event.request.url);
+  
+  try {
+    // Check for KV namespace availability
+    const kvNamespace = event.env?.__STATIC_CONTENT || (typeof __STATIC_CONTENT !== 'undefined' ? __STATIC_CONTENT : undefined);
+    
+    if (!kvNamespace) {
+      debugLog('KV namespace not available', { 
+        hasEnv: !!event.env,
+        hasStaticContent: typeof __STATIC_CONTENT !== 'undefined',
+        manifestKeys: Object.keys(assetManifest).slice(0, 5),
+        envKeys: event.env ? Object.keys(event.env).slice(0, 10) : [],
+        staticContentBinding: !!event.env?.__STATIC_CONTENT
+      });
+      
+      // Return helpful error page for root path
+      if (url.pathname === '/' || url.pathname === '/index.html') {
+        return new Response(getErrorPageHTML(), {
+          status: 503,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
+      }
+      
+      return new Response('Asset serving unavailable - KV namespace not bound', { 
+        status: 503,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+    
+    // Configure caching options
+    const options = {
+      ASSET_NAMESPACE: kvNamespace,
+      ASSET_MANIFEST: assetManifest,
+      cacheControl: {
+        browserTTL: 60 * 60 * 24 * 30, // 30 days
+        edgeTTL: 60 * 60 * 24 * 30,
+        bypassCache: false,
+      },
+      mapRequestToAsset: mapRequestToAsset,
+    };
+    
+    // Handle root path - serve index.html
+    if (url.pathname === '/') {
+      const request = new Request(`${url.origin}/index.html`, event.request);
+      return await getAssetFromKV({ ...event, request }, options);
+    }
+    
+    // Try to get the asset
+    let response = await getAssetFromKV(event, options);
+    
+    // Add security headers
+    response = addSecurityHeaders(response);
+    
+    // Set appropriate content type
+    response = setContentType(response, url.pathname);
+    
+    return response;
+    
+  } catch (e) {
+    // If asset not found, try to serve index.html for SPA routing
+    if (e.status === 404) {
+      try {
+        const request = new Request(`${url.origin}/index.html`, event.request);
+        let response = await getAssetFromKV({ ...event, request }, {
+          ...options,
+          cacheControl: {
+            browserTTL: 60 * 60, // 1 hour for HTML
+            edgeTTL: 60 * 60,
+            bypassCache: false,
+          }
+        });
+        
+        response = addSecurityHeaders(response);
+        return response;
+        
+      } catch (htmlError) {
+        return new Response('Not Found', { status: 404 });
+      }
+    }
+    
+    console.error('Asset serving error:', e);
+    return new Response('Asset Error', { status: 500 });
+  }
+}
+
+/**
+ * Handle API requests (placeholder for future expansion)
+ */
+async function handleApiRequest(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  
+  // CORS headers for API requests
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+  
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+  
+  // Future API endpoints can be added here
+  switch (path) {
+    case '/api/health':
+      return new Response(JSON.stringify({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        version: '2.0.0'
+      }), {
+        headers: { 
+          'Content-Type': 'application/json',
+          ...corsHeaders 
+        }
+      });
+      
+    default:
+      return new Response('API endpoint not found', { 
+        status: 404,
+        headers: corsHeaders 
+      });
+  }
+}
+
+/**
+ * Add security headers to response
+ */
+function addSecurityHeaders(response) {
+  const newHeaders = new Headers(response.headers);
+  
+  // Security headers
+  newHeaders.set('X-Content-Type-Options', 'nosniff');
+  newHeaders.set('X-Frame-Options', 'DENY');
+  newHeaders.set('X-XSS-Protection', '1; mode=block');
+  newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Content Security Policy
+  newHeaders.set('Content-Security-Policy', 
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: blob:; " +
+    "connect-src 'self'; " +
+    "frame-src 'none'; " +
+    "object-src 'none';"
+  );
+  
+  // Performance headers
+  newHeaders.set('Server-Timing', 'worker;dur=0');
+  
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
+}
+
+/**
+ * Set appropriate content type based on file extension
+ */
+function setContentType(response, pathname) {
+  const newHeaders = new Headers(response.headers);
+  
+  // Set content type if not already set
+  if (!newHeaders.has('Content-Type')) {
+    const ext = pathname.split('.').pop().toLowerCase();
+    
+    const mimeTypes = {
+      'html': 'text/html; charset=utf-8',
+      'css': 'text/css; charset=utf-8',
+      'js': 'application/javascript; charset=utf-8',
+      'json': 'application/json; charset=utf-8',
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+      'ico': 'image/x-icon',
+      'woff': 'font/woff',
+      'woff2': 'font/woff2',
+      'ttf': 'font/ttf',
+      'eot': 'application/vnd.ms-fontobject',
+    };
+    
+    const mimeType = mimeTypes[ext] || 'application/octet-stream';
+    newHeaders.set('Content-Type', mimeType);
+  }
+  
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
+}
+
+/**
+ * Generate error page HTML for asset serving issues
+ */
+function getErrorPageHTML() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Art Studio - Deployment Issue</title>
+    <style>
+        body { font-family: monospace; background: #1a1a1a; color: #00ff00; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .ascii-art { font-size: 8px; line-height: 8px; white-space: pre; margin: 20px 0; }
+        .error-box { border: 1px solid #ff6b6b; background: #2a1f1f; padding: 20px; margin: 20px 0; }
+        .status { color: #ff6b6b; }
+        .fix-steps { color: #ffa500; }
+        pre { background: #0f0f0f; padding: 10px; border-left: 3px solid #00ff00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ascii-art">
+ █████╗ ███████╗ ██████╗██╗██╗     ██████╗ ██████╗ ████████╗
+██╔══██╗██╔════╝██╔════╝██║██║    ██╔═══██╗██╔══██╗╚══██╔══╝
+███████║███████╗██║     ██║██║    ██║   ██║██████╔╝   ██║   
+██╔══██║╚════██║██║     ██║██║    ██║   ██║██╔══██╗   ██║   
+██║  ██║███████║╚██████╗██║██║    ╚██████╔╝██║  ██║   ██║   
+╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
+        </div>
+        
+        <h1>🚨 Asset Serving Error</h1>
+        
+        <div class="error-box">
+            <h2 class="status">STATUS: Service Temporarily Unavailable</h2>
+            <p>The static assets for ASCII Art Studio cannot be served due to a KV namespace binding issue.</p>
+        </div>
+        
+        <div class="fix-steps">
+            <h3>For Developers:</h3>
+            <p>The Cloudflare Worker is missing the required KV namespace binding for static content.</p>
+            
+            <h4>Quick Fix:</h4>
+            <pre>wrangler deploy --env production</pre>
+            
+            <h4>Verify KV Binding:</h4>
+            <p>Check that wrangler.toml includes:</p>
+            <pre>[[kv_namespaces]]
+binding = "__STATIC_CONTENT"
+id = "static-content"</pre>
+        </div>
+        
+        <p><strong>Worker Status:</strong> Online | <strong>Assets:</strong> Unavailable | <strong>Time:</strong> ${new Date().toISOString()}</p>
+    </div>
+</body>
+</html>`;
+}

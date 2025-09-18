@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-palette="orange">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: blob: ./img/;
+        connect-src 'self';
+        frame-src 'none';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+    ">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <title>ASCII Art Studio - Transform Text & Images</title>
+    <meta name="description" content="Create stunning ASCII art from text and images. Professional ASCII art generator with multiple styles and export formats.">
+    <meta name="keywords" content="ASCII art, text art, ASCII generator, ASCII converter">
+    
+    <!-- External Dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400&display=swap" rel="stylesheet">
+    
+    <!-- Application Styles -->
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="navbar__container">
+            <div class="navbar__brand">
+                <img src="img/ASCII-LOGO-CLEAN.png" alt="ASCII Art Studio Logo" class="navbar__logo">
+                <span class="navbar__title">ASCII ART STUDIO</span>
+            </div>
+            
+            <div class="navbar__actions">
+                <!-- Color Palette Selection -->
+                <div class="navbar__palette" role="group" aria-label="Color palette selection">
+                    <div class="palette-card palette-card--active" data-palette="orange" role="button" aria-pressed="true" tabindex="0">
+                        <div class="palette-card__color" data-color="orange"></div>
+                        <span class="palette-card__name">ORANGE</span>
+                    </div>
+                    
+                    <div class="palette-card" data-palette="green" role="button" aria-pressed="false" tabindex="0">
+                        <div class="palette-card__color" data-color="green"></div>
+                        <span class="palette-card__name">GREEN</span>
+                    </div>
+                    
+                    <div class="palette-card" data-palette="blue" role="button" aria-pressed="false" tabindex="0">
+                        <div class="palette-card__color" data-color="blue"></div>
+                        <span class="palette-card__name">BLUE</span>
+                    </div>
+                    
+                    <div class="palette-card" data-palette="purple" role="button" aria-pressed="false" tabindex="0">
+                        <div class="palette-card__color" data-color="purple"></div>
+                        <span class="palette-card__name">PURPLE</span>
+                    </div>
+                    
+                    <div class="palette-card" data-palette="red" role="button" aria-pressed="false" tabindex="0">
+                        <div class="palette-card__color" data-color="red"></div>
+                        <span class="palette-card__name">RED</span>
+                    </div>
+                    
+                    <div class="palette-card" data-palette="amber" role="button" aria-pressed="false" tabindex="0">
+                        <div class="palette-card__color" data-color="amber"></div>
+                        <span class="palette-card__name">AMBER</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-container">
+
+        <!-- Mode Selection -->
+        <section class="mode-selector" id="features" role="tablist" aria-label="Generation modes">
+            <div class="mode-card mode-card--active" data-mode="text" role="tab" aria-selected="true" aria-controls="text-panel" tabindex="0">
+                <div class="mode-card__icon">[T]</div>
+                <h3 class="mode-card__title">Text to ASCII</h3>
+                <p class="mode-card__description">Convert text to stylized ASCII art fonts</p>
+            </div>
+            
+            <div class="mode-card" data-mode="image" role="tab" aria-selected="false" aria-controls="image-panel" tabindex="0">
+                <div class="mode-card__icon">[I]</div>
+                <h3 class="mode-card__title">Image to ASCII</h3>
+                <p class="mode-card__description">Transform images into ASCII art representations</p>
+            </div>
+            
+            <div class="mode-card mode-card--disabled" data-mode="banner" role="tab" aria-selected="false" aria-controls="banner-panel" tabindex="-1" aria-disabled="true">
+                <div class="mode-card__icon">[B]</div>
+                <h3 class="mode-card__title">Warez Banner</h3>
+                <p class="mode-card__description">Create retro-style warez scene banners</p>
+            </div>
+            
+            <div class="mode-card mode-card--disabled" data-mode="figlet" role="tab" aria-selected="false" aria-controls="figlet-panel" tabindex="-1" aria-disabled="true">
+                <div class="mode-card__icon">[F]</div>
+                <h3 class="mode-card__title">FIGlet Text</h3>
+                <p class="mode-card__description">Generate FIGlet-style text art with various fonts</p>
+            </div>
+        </section>
+
+        <!-- Main Application Grid -->
+        <main class="app-grid">
+            <!-- Input Panel -->
+            <section class="input-panel">
+                <header class="input-panel__header">
+                    <h2 class="input-panel__title">Configure</h2>
+                    <div class="input-panel__indicator">
+                        <span class="mode-indicator" id="modeIndicator">TEXT</span>
+                    </div>
+                </header>
+
+                <!-- Text Mode Panel -->
+                <div id="text-panel" class="mode-content" role="tabpanel" aria-labelledby="text-mode">
+                    <div class="form-group form-group--primary">
+                        <textarea id="textInput" class="form-input form-input--large" placeholder="Enter your text..." rows="3" maxlength="100" aria-describedby="text-hint"></textarea>
+                        <div class="form-hint">
+                            <span class="character-count" id="characterCount">0/100</span>
+                        </div>
+                    </div>
+                    
+                    <div class="controls-row">
+                        <div class="control-group">
+                            <label for="fontSelect" class="control-label">Font</label>
+                            <select id="fontSelect" class="form-input form-input--compact">
+                                <option value="standard">Standard</option>
+                                <option value="big">Big</option>
+                                <option value="small">Small</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="spacingSelect" class="control-label">Spacing</label>
+                            <select id="spacingSelect" class="form-input form-input--compact">
+                                <option value="narrow">Narrow</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="wide">Wide</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="generateTextBtn" class="btn btn--primary btn--generate">
+                        <span class="btn__icon">[G]</span>
+                        <span class="btn__text">Generate</span>
+                    </button>
+                </div>
+
+                <!-- Image Mode Panel -->
+                <div id="image-panel" class="mode-content hidden" role="tabpanel" aria-labelledby="image-mode">
+                    <div class="upload-zone" id="imageUploadZone">
+                        <div class="upload-zone__icon">[↑]</div>
+                        <div class="upload-zone__text">Drop image or click to upload</div>
+                        <div class="upload-zone__hint">JPG, PNG, GIF, WebP • Max 10MB</div>
+                        <input type="file" id="imageInput" accept="image/*" aria-label="Upload image file">
+                    </div>
+                    
+                    <img id="previewImage" class="preview-image hidden" alt="Preview of uploaded image">
+                    
+                    <div class="controls-section">
+                        <div class="controls-row">
+                            <div class="control-group control-group--slider">
+                                <label for="widthInput" class="control-label">Width</label>
+                                <div class="slider-container">
+                                    <input type="range" id="widthInput" class="form-slider" min="20" max="200" value="80">
+                                    <div class="slider-value" id="widthValue">80</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="densitySelect" class="control-label">Density</label>
+                                <select id="densitySelect" class="form-input form-input--compact">
+                                    <option value="minimal">Minimal</option>
+                                    <option value="simple">Simple</option>
+                                    <option value="detailed" selected>Detailed</option>
+                                    <option value="extended">Extended</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="controls-row controls-row--options">
+                            <div class="option-group">
+                                <label class="option-label">
+                                    <input type="checkbox" id="edgeDetection" class="option-input">
+                                    <span class="option-text">Edge Detection</span>
+                                </label>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label class="option-label">
+                                    <input type="checkbox" id="dithering" class="option-input">
+                                    <span class="option-text">Dithering</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="generateImageBtn" class="btn btn--primary btn--generate" disabled>
+                        <span class="btn__icon">[G]</span>
+                        <span class="btn__text">Generate</span>
+                    </button>
+                </div>
+
+                <!-- Banner Mode Panel -->
+                <div id="banner-panel" class="mode-content hidden" role="tabpanel" aria-labelledby="banner-mode">
+                    <div class="form-group form-group--primary">
+                        <input type="text" id="bannerInput" class="form-input form-input--large" placeholder="Banner text..." maxlength="50">
+                    </div>
+                    
+                    <div class="controls-row">
+                        <div class="control-group">
+                            <label for="bannerStyle" class="control-label">Style</label>
+                            <select id="bannerStyle" class="form-input form-input--compact">
+                                <option value="classic">Classic</option>
+                                <option value="elite">Elite</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="graffiti">Graffiti</option>
+                                <option value="matrix">Matrix</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="generateBannerBtn" class="btn btn--primary btn--generate">
+                        <span class="btn__icon">[G]</span>
+                        <span class="btn__text">Generate</span>
+                    </button>
+                </div>
+
+                <!-- FIGlet Mode Panel -->
+                <div id="figlet-panel" class="mode-content hidden" role="tabpanel" aria-labelledby="figlet-mode">
+                    <div class="form-group form-group--primary">
+                        <input type="text" id="figletInput" class="form-input form-input--large" placeholder="FIGlet text..." maxlength="20">
+                    </div>
+                    
+                    <div class="controls-row">
+                        <div class="control-group">
+                            <label for="figletFont" class="control-label">Font</label>
+                            <select id="figletFont" class="form-input form-input--compact">
+                                <option value="big">Big</option>
+                                <option value="standard">Standard</option>
+                                <option value="small">Small</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="generateFigletBtn" class="btn btn--primary btn--generate">
+                        <span class="btn__icon">[G]</span>
+                        <span class="btn__text">Generate</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Output Panel -->
+            <section class="output-panel">
+                <header class="output-panel__header">
+                    <h2 class="output-panel__title">Output</h2>
+                    <div class="output-panel__status">
+                        <span class="status-indicator" id="statusIndicator"></span>
+                        <span class="status-text" id="outputStatus">Ready</span>
+                    </div>
+                </header>
+                
+                <div class="ascii-output ascii-output--empty" id="asciiOutput" tabindex="0" role="textbox" aria-label="Generated ASCII art" aria-readonly="true">
+                    <div class="output-placeholder">
+                        <div class="placeholder-icon">[#]</div>
+                        <div class="placeholder-text">Your ASCII art will appear here</div>
+                    </div>
+                </div>
+                
+                <footer class="output-actions">
+                    <div class="primary-actions">
+                        <button id="copyBtn" class="action-btn action-btn--primary" title="Copy to clipboard" disabled>
+                            <span class="action-btn__icon">[C]</span>
+                            <span class="action-btn__text">Copy</span>
+                        </button>
+                        
+                        <button id="copyDiscordBtn" class="action-btn action-btn--secondary" title="Copy formatted for Discord" disabled>
+                            <span class="action-btn__icon">[D]</span>
+                            <span class="action-btn__text">Discord</span>
+                        </button>
+                        
+                        <button id="expandBtn" class="action-btn action-btn--secondary" title="View fullscreen" disabled>
+                            <span class="action-btn__icon">[□]</span>
+                            <span class="action-btn__text">Expand</span>
+                        </button>
+                    </div>
+                </footer>
+            </section>
+        </main>
+    </div>
+
+    <!-- Fullscreen Modal -->
+    <div id="fullscreenModal" class="modal" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal__backdrop" id="modalBackdrop"></div>
+        <div class="modal__content" id="modalContent">
+            <header class="modal__header" id="modalHeader">
+                <h3 class="modal__title" id="modal-title">ASCII Art Preview</h3>
+                <div class="modal__controls">
+                    <button class="modal__close" id="closeModal" aria-label="Close modal">
+                        [X]
+                    </button>
+                </div>
+            </header>
+            
+            <div class="modal__body" id="modalBody">
+                <!-- ASCII content will be inserted here -->
+            </div>
+            
+            <footer class="modal__footer">
+                <button id="modalCopyBtn" class="btn btn--primary">
+                    [C] Copy
+                </button>
+                <div class="modal__resize-handle" id="resizeHandle" title="Drag to resize"></div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Floating Save Tool -->
+    <div id="saveToolContainer" class="save-tool save-tool--hidden" aria-hidden="true">
+        <button id="saveToolBtn" class="save-tool__btn" title="Save ASCII art" disabled>
+            <span class="save-tool__icon">[↓]</span>
+            <span class="save-tool__pulse" id="saveToolPulse"></span>
+        </button>
+        
+        <div class="save-tool__menu" id="saveToolMenu">
+            <div class="save-tool__header">
+                <span class="save-tool__title">Save As</span>
+                <button class="save-tool__close" id="saveToolClose" aria-label="Close save menu">×</button>
+            </div>
+            
+            <div class="save-tool__options">
+                <button class="save-tool__option" data-format="discord" title="Save for Discord (optimized formatting)">
+                    <span class="save-tool__option-icon">[D]</span>
+                    <span class="save-tool__option-text">Discord</span>
+                    <span class="save-tool__option-ext">.txt</span>
+                </button>
+                
+                <button class="save-tool__option" data-format="txt" title="Save as plain text">
+                    <span class="save-tool__option-icon">[T]</span>
+                    <span class="save-tool__option-text">Plain Text</span>
+                    <span class="save-tool__option-ext">.txt</span>
+                </button>
+                
+                <button class="save-tool__option" data-format="html" title="Save as styled HTML">
+                    <span class="save-tool__option-icon">[H]</span>
+                    <span class="save-tool__option-text">HTML</span>
+                    <span class="save-tool__option-ext">.html</span>
+                </button>
+                
+                <button class="save-tool__option" data-format="json" title="Save as structured JSON">
+                    <span class="save-tool__option-icon">[J]</span>
+                    <span class="save-tool__option-text">JSON</span>
+                    <span class="save-tool__option-ext">.json</span>
+                </button>
+                
+                <button class="save-tool__option" data-format="md" title="Save as Markdown">
+                    <span class="save-tool__option-icon">[M]</span>
+                    <span class="save-tool__option-text">Markdown</span>
+                    <span class="save-tool__option-ext">.md</span>
+                </button>
+            </div>
+            
+            <div class="save-tool__footer">
+                <div class="save-tool__last-format" id="saveToolLastFormat">
+                    Last used: <span id="saveToolLastFormatName">TXT</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading indicator (hidden by default) -->
+    <div id="loadingIndicator" class="loading hidden" aria-hidden="true"></div>
+
+    <!-- Application Scripts -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

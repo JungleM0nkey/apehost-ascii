@@ -1,0 +1,56 @@
+{
+  "name": "ascii-art-studio",
+  "version": "2.0.0",
+  "description": "Transform text and images into stunning ASCII art - deployed on Cloudflare Workers",
+  "main": "src/worker.js",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8080 --directory public || python -m http.server 8080 --directory public",
+    "dev:node": "npx serve public -p 8080",
+    "start": "npm run dev",
+    "deploy": "wrangler deploy --env production",
+    "preview": "wrangler dev --local",
+    "lint": "echo 'No linting configured'",
+    "test": "echo 'No tests configured'",
+    "build": "echo 'No build step required for static assets'",
+    "clean": "rm -rf dist/ node_modules/.cache/",
+    "logs": "wrangler tail --env production"
+  },
+  "keywords": [
+    "ascii-art",
+    "text-art",
+    "cloudflare-workers",
+    "static-site",
+    "javascript",
+    "art-generator"
+  ],
+  "author": "ASCII Art Studio",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ascii-art-studio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/ascii-art-studio/issues"
+  },
+  "homepage": "https://ascii-art-studio.pages.dev",
+  "devDependencies": {
+    "serve": "^14.2.1",
+    "wrangler": "^4.30.0"
+  },
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "cloudflare": {
+    "account_id": "your-account-id",
+    "zone_id": "your-zone-id"
+  }
+}

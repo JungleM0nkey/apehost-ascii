@@ -1,0 +1,203 @@
+/* ASCII Art Studio - Theme System */
+/* Dynamic Color Palette System with Cyberpunk Aesthetic */
+
+:root {
+    --font-family: 'Share Tech Mono', monospace;
+    --border-radius: 0.25rem;
+    --glow-intensity: 0.1;
+    --scan-line-opacity: 0.05;
+    --backdrop-blur: 1px;
+    
+    /* Orange Fire Theme (Default) */
+    --primary: #ff9500;
+    --primary-hover: #ffb84d;
+    --primary-focus: rgba(255, 149, 0, 0.125);
+    --secondary: #ffcc00;
+    --secondary-hover: #ffd633;
+    --secondary-focus: rgba(255, 204, 0, 0.125);
+    --accent: #ff6600;
+    --accent-hover: #ff8533;
+    --accent-focus: rgba(255, 102, 0, 0.125);
+    --muted-color: #cc9966;
+    --muted-border-color: #664d33;
+    --code-background-color: #1a1a1a;
+    --code-color: #ff9500;
+    --background-color: #0d0d0d;
+    --color: #ffcc99;
+    --h1-color: #ff9500;
+    --h2-color: #ff9500;
+    --h3-color: #ff9500;
+    --h4-color: #ff9500;
+    --h5-color: #ff9500;
+    --h6-color: #ff9500;
+    --glow-color: rgba(255, 149, 0, var(--glow-intensity));
+}
+
+/* Matrix Green Theme */
+[data-palette="green"] {
+    --primary: #00ff00;
+    --primary-hover: #33ff33;
+    --primary-focus: rgba(0, 255, 0, 0.125);
+    --secondary: #00cc00;
+    --secondary-hover: #00ff33;
+    --secondary-focus: rgba(0, 204, 0, 0.125);
+    --accent: #00aa00;
+    --accent-hover: #00dd00;
+    --accent-focus: rgba(0, 170, 0, 0.125);
+    --muted-color: #66cc66;
+    --muted-border-color: #336633;
+    --code-color: #00ff00;
+    --color: #ccffcc;
+    --h1-color: #00ff00;
+    --h2-color: #00ff00;
+    --h3-color: #00ff00;
+    --h4-color: #00ff00;
+    --h5-color: #00ff00;
+    --h6-color: #00ff00;
+    --glow-color: rgba(0, 255, 0, var(--glow-intensity));
+}
+
+/* Cyber Blue Theme */
+[data-palette="blue"] {
+    --primary: #00aaff;
+    --primary-hover: #33bbff;
+    --primary-focus: rgba(0, 170, 255, 0.125);
+    --secondary: #0088cc;
+    --secondary-hover: #0099dd;
+    --secondary-focus: rgba(0, 136, 204, 0.125);
+    --accent: #0066aa;
+    --accent-hover: #0077bb;
+    --accent-focus: rgba(0, 102, 170, 0.125);
+    --muted-color: #6699cc;
+    --muted-border-color: #334466;
+    --code-color: #00aaff;
+    --color: #ccddff;
+    --h1-color: #00aaff;
+    --h2-color: #00aaff;
+    --h3-color: #00aaff;
+    --h4-color: #00aaff;
+    --h5-color: #00aaff;
+    --h6-color: #00aaff;
+    --glow-color: rgba(0, 170, 255, var(--glow-intensity));
+}
+
+/* Neon Purple Theme */
+[data-palette="purple"] {
+    --primary: #cc44ff;
+    --primary-hover: #dd66ff;
+    --primary-focus: rgba(204, 68, 255, 0.125);
+    --secondary: #aa22dd;
+    --secondary-hover: #bb33ee;
+    --secondary-focus: rgba(170, 34, 221, 0.125);
+    --accent: #8800bb;
+    --accent-hover: #9911cc;
+    --accent-focus: rgba(136, 0, 187, 0.125);
+    --muted-color: #aa66cc;
+    --muted-border-color: #443366;
+    --code-color: #cc44ff;
+    --color: #eeccff;
+    --h1-color: #cc44ff;
+    --h2-color: #cc44ff;
+    --h3-color: #cc44ff;
+    --h4-color: #cc44ff;
+    --h5-color: #cc44ff;
+    --h6-color: #cc44ff;
+    --glow-color: rgba(204, 68, 255, var(--glow-intensity));
+}
+
+/* Terminal Red Theme */
+[data-palette="red"] {
+    --primary: #ff4444;
+    --primary-hover: #ff6666;
+    --primary-focus: rgba(255, 68, 68, 0.125);
+    --secondary: #cc2222;
+    --secondary-hover: #dd3333;
+    --secondary-focus: rgba(204, 34, 34, 0.125);
+    --accent: #aa0000;
+    --accent-hover: #bb1111;
+    --accent-focus: rgba(170, 0, 0, 0.125);
+    --muted-color: #cc6666;
+    --muted-border-color: #663333;
+    --code-color: #ff4444;
+    --color: #ffcccc;
+    --h1-color: #ff4444;
+    --h2-color: #ff4444;
+    --h3-color: #ff4444;
+    --h4-color: #ff4444;
+    --h5-color: #ff4444;
+    --h6-color: #ff4444;
+    --glow-color: rgba(255, 68, 68, var(--glow-intensity));
+}
+
+/* Retro Amber Theme */
+[data-palette="amber"] {
+    --primary: #ffaa00;
+    --primary-hover: #ffbb22;
+    --primary-focus: rgba(255, 170, 0, 0.125);
+    --secondary: #dd8800;
+    --secondary-hover: #ee9911;
+    --secondary-focus: rgba(221, 136, 0, 0.125);
+    --accent: #bb6600;
+    --accent-hover: #cc7700;
+    --accent-focus: rgba(187, 102, 0, 0.125);
+    --muted-color: #cc9944;
+    --muted-border-color: #664422;
+    --code-color: #ffaa00;
+    --color: #ffddaa;
+    --h1-color: #ffaa00;
+    --h2-color: #ffaa00;
+    --h3-color: #ffaa00;
+    --h4-color: #ffaa00;
+    --h5-color: #ffaa00;
+    --h6-color: #ffaa00;
+    --glow-color: rgba(255, 170, 0, var(--glow-intensity));
+}
+
+/* Color Indicators for Palette Selection */
+.color-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 1px solid var(--muted-border-color);
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.color-indicator:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px currentColor;
+}
+
+.color-indicator[data-color="orange"], 
+#currentColorIndicator.orange {
+    background: linear-gradient(45deg, #ff9500, #ffb84d);
+}
+
+.color-indicator[data-color="green"], 
+#currentColorIndicator.green {
+    background: linear-gradient(45deg, #00ff00, #33ff33);
+}
+
+.color-indicator[data-color="blue"], 
+#currentColorIndicator.blue {
+    background: linear-gradient(45deg, #00d4ff, #40e0ff);
+}
+
+.color-indicator[data-color="purple"], 
+#currentColorIndicator.purple {
+    background: linear-gradient(45deg, #9146ff, #b070ff);
+}
+
+.color-indicator[data-color="red"], 
+#currentColorIndicator.red {
+    background: linear-gradient(45deg, #ff3030, #ff6060);
+}
+
+.color-indicator[data-color="amber"], 
+#currentColorIndicator.amber {
+    background: linear-gradient(45deg, #ffb000, #ffd700);
+}
