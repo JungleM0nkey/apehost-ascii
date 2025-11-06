@@ -120,10 +120,12 @@ class AsciiArtApp {
             // Banner mode
             bannerInput: '#bannerInput',
             bannerStyle: '#bannerStyle',
+            bannerTextEffect: '#bannerTextEffect',
             bannerAddCredits: '#bannerAddCredits',
             bannerAddDate: '#bannerAddDate',
             bannerCredits: '#bannerCredits',
             bannerCreditsGroup: '#bannerCreditsGroup',
+            bannerStylePreviewContent: '#bannerStylePreviewContent',
             generateBannerBtn: '#generateBannerBtn',
             
             // FIGlet mode
@@ -210,6 +212,15 @@ class AsciiArtApp {
         // Banner options
         this.elements.get('bannerAddCredits').addEventListener('change', (e) => {
             this.toggleBannerCredits(e.target.checked);
+        });
+
+        // Banner style preview
+        this.elements.get('bannerStyle').addEventListener('change', () => {
+            this.updateBannerStylePreview();
+        });
+
+        this.elements.get('bannerTextEffect').addEventListener('change', () => {
+            this.updateBannerStylePreview();
         });
 
         // FIGlet generation
@@ -496,6 +507,7 @@ class AsciiArtApp {
 
             const text = this.elements.get('bannerInput').value.trim();
             const style = this.elements.get('bannerStyle').value;
+            const textEffect = this.elements.get('bannerTextEffect').value;
             const addCredits = this.elements.get('bannerAddCredits').checked;
             const addDate = this.elements.get('bannerAddDate').checked;
             const credits = this.elements.get('bannerCredits').value.trim() || 'ASCII ART STUDIO';
@@ -507,6 +519,7 @@ class AsciiArtApp {
             const generator = this.state.generators.get('banner');
             const result = await generator.generate(text, {
                 style,
+                textEffect,
                 addCredits,
                 addDate,
                 credits,
@@ -608,6 +621,28 @@ class AsciiArtApp {
             creditsGroup.classList.remove('hidden');
         } else {
             creditsGroup.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Update banner style preview
+     */
+    updateBannerStylePreview() {
+        try {
+            const generator = this.state.generators.get('banner');
+            if (!generator) return;
+
+            const style = this.elements.get('bannerStyle').value;
+            const styleInfo = generator.getStyleInfo(style);
+
+            if (styleInfo && styleInfo.preview) {
+                const previewContent = this.elements.get('bannerStylePreviewContent');
+                if (previewContent) {
+                    previewContent.textContent = styleInfo.preview;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update style preview:', error);
         }
     }
 
@@ -1023,18 +1058,21 @@ class AsciiArtApp {
     initializeUI() {
         // Set initial mode
         this.setMode('text');
-        
+
         // Set initial palette if not loaded from storage
         if (!localStorage.getItem(Config.STORAGE_KEYS.PALETTE)) {
             this.setPalette('orange');
         }
-        
+
         // Clear output
         this.clearOutput();
-        
+
         // Validate initial inputs
         this.validateTextInput();
         this.updateCharacterCount();
+
+        // Initialize banner style preview
+        this.updateBannerStylePreview();
     }
 
     /**

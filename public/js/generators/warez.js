@@ -80,6 +80,110 @@ export class WarezGenerator {
                 bottomJunction: '┴',
                 decoration: '...',
                 separator: '·'
+            },
+            cyber: {
+                name: 'Cyber',
+                topLeft: '◢',
+                topRight: '◣',
+                bottomLeft: '◥',
+                bottomRight: '◤',
+                horizontal: '▬',
+                vertical: '▐',
+                topJunction: '▼',
+                bottomJunction: '▲',
+                decoration: '▓▒░▒▓',
+                separator: '▬'
+            },
+            neon: {
+                name: 'Neon',
+                topLeft: '╒',
+                topRight: '╕',
+                bottomLeft: '╘',
+                bottomRight: '╛',
+                horizontal: '═',
+                vertical: '│',
+                topJunction: '╤',
+                bottomJunction: '╧',
+                decoration: '▓▓░░▓▓',
+                separator: '━'
+            },
+            oldschool: {
+                name: 'Old School',
+                topLeft: '#',
+                topRight: '#',
+                bottomLeft: '#',
+                bottomRight: '#',
+                horizontal: '=',
+                vertical: '#',
+                topJunction: '#',
+                bottomJunction: '#',
+                decoration: '-=-',
+                separator: '-'
+            },
+            diamond: {
+                name: 'Diamond',
+                topLeft: '◆',
+                topRight: '◆',
+                bottomLeft: '◆',
+                bottomRight: '◆',
+                horizontal: '◇',
+                vertical: '◆',
+                topJunction: '◆',
+                bottomJunction: '◆',
+                decoration: '◇◆◇',
+                separator: '◇'
+            },
+            shadow: {
+                name: 'Shadow',
+                topLeft: '┏',
+                topRight: '┓',
+                bottomLeft: '┗',
+                bottomRight: '┛',
+                horizontal: '━',
+                vertical: '┃',
+                topJunction: '┳',
+                bottomJunction: '┻',
+                decoration: '▓▓▒▒░░',
+                separator: '─'
+            },
+            block: {
+                name: 'Block',
+                topLeft: '█',
+                topRight: '█',
+                bottomLeft: '█',
+                bottomRight: '█',
+                horizontal: '█',
+                vertical: '█',
+                topJunction: '█',
+                bottomJunction: '█',
+                decoration: '▓▒░',
+                separator: '▀'
+            },
+            wave: {
+                name: 'Wave',
+                topLeft: '╔',
+                topRight: '╗',
+                bottomLeft: '╚',
+                bottomRight: '╝',
+                horizontal: '═',
+                vertical: '║',
+                topJunction: '╦',
+                bottomJunction: '╩',
+                decoration: '≈∼≈∼≈',
+                separator: '≈'
+            },
+            star: {
+                name: 'Star',
+                topLeft: '★',
+                topRight: '★',
+                bottomLeft: '★',
+                bottomRight: '★',
+                horizontal: '─',
+                vertical: '│',
+                topJunction: '★',
+                bottomJunction: '★',
+                decoration: '★·★·★',
+                separator: '·'
             }
         };
     }
@@ -97,26 +201,40 @@ export class WarezGenerator {
                 addCredits = false,
                 credits = 'ASCII ART STUDIO',
                 addDate = false,
-                multiline = false
+                multiline = false,
+                textEffect = 'uppercase'
             } = options;
 
             // Validate input
-            const validation = this.validateInput(text);
+            const validation = this.validateInput(text, textEffect);
             if (!validation.valid) {
                 throw new Error(validation.error);
+            }
+
+            // Validate credits text if provided
+            if (addCredits && credits) {
+                const maxCreditsLength = this.bannerWidth - 4;
+                if (credits.length > maxCreditsLength) {
+                    throw new Error(`Credits text too long (max ${maxCreditsLength} characters)`);
+                }
             }
 
             // Get style data
             const styleData = this.styles[style] || this.styles.classic;
 
+            // Auto-detect multiline if text contains pipe or newline
+            const hasMultilineMarkers = text.includes('|') || text.includes('\n');
+            const shouldSplit = multiline || hasMultilineMarkers;
+
             // Process text (split into lines if multiline)
-            const textLines = multiline ? this.splitIntoLines(text) : [text];
+            const textLines = shouldSplit ? this.splitIntoLines(text) : [text];
 
             // Build banner
             const banner = this.buildBanner(textLines, styleData, {
                 addCredits,
                 credits,
-                addDate
+                addDate,
+                textEffect
             });
 
             return banner;
@@ -129,9 +247,10 @@ export class WarezGenerator {
     /**
      * Validate banner input
      * @param {string} text - Input text
+     * @param {string} textEffect - Text effect to be applied
      * @returns {Object} Validation result
      */
-    validateInput(text) {
+    validateInput(text, textEffect = 'uppercase') {
         if (!text || text.trim().length === 0) {
             return {
                 valid: false,
@@ -139,10 +258,19 @@ export class WarezGenerator {
             };
         }
 
-        if (text.length > 50) {
+        // Calculate maximum text length based on banner width minus borders
+        const maxLength = this.bannerWidth - 4; // 2 for borders, 2 for padding
+
+        // For spaced text effect, the effective length is doubled
+        let effectiveLength = text.trim().length;
+        if (textEffect === 'spaced') {
+            effectiveLength = text.trim().length * 2 - 1; // Account for spaces between chars
+        }
+
+        if (effectiveLength > maxLength) {
             return {
                 valid: false,
-                error: 'Banner text too long (max 50 characters)'
+                error: `Banner text too long (max ${maxLength} characters${textEffect === 'spaced' ? ' without spacing' : ''})`
             };
         }
 
@@ -155,9 +283,102 @@ export class WarezGenerator {
      * @returns {Array<string>} Text lines
      */
     splitIntoLines(text) {
-        // Split by common separators
-        const lines = text.split(/[|\n]/).map(line => line.trim()).filter(line => line.length > 0);
+        // Split by common separators (pipe or newline)
+        const lines = text.split(/[|\n]/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        // Fallback: if all lines are empty after filtering, return original text trimmed
+        if (lines.length === 0) {
+            const trimmed = text.trim();
+            return trimmed.length > 0 ? [trimmed] : ['EMPTY'];
+        }
+
+        return lines;
+    }
+
+    /**
+     * Wrap text to fit within maximum width
+     * @param {string} text - Input text
+     * @param {number} maxWidth - Maximum width per line
+     * @returns {Array<string>} Wrapped text lines
+     */
+    wrapText(text, maxWidth) {
+        if (text.length <= maxWidth) {
+            return [text];
+        }
+
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        words.forEach(word => {
+            // If adding this word would exceed maxWidth
+            if (currentLine.length > 0 && (currentLine + ' ' + word).length > maxWidth) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine += (currentLine.length > 0 ? ' ' : '') + word;
+            }
+        });
+
+        // Add remaining text
+        if (currentLine.length > 0) {
+            lines.push(currentLine);
+        }
+
         return lines.length > 0 ? lines : [text];
+    }
+
+    /**
+     * Apply text effect transformation
+     * @param {string} text - Input text
+     * @param {string} effect - Effect type
+     * @returns {string} Transformed text
+     */
+    applyTextEffect(text, effect = 'uppercase') {
+        switch(effect) {
+            case 'leetspeak':
+                // Convert to 1337 speak
+                return text
+                    .replace(/[aA]/g, '4')
+                    .replace(/[eE]/g, '3')
+                    .replace(/[iI]/g, '1')
+                    .replace(/[oO]/g, '0')
+                    .replace(/[sS]/g, '5')
+                    .replace(/[tT]/g, '7')
+                    .toUpperCase();
+
+            case 'alternating':
+                // aLtErNaTiNg CaSe
+                return text.split('').map((char, index) =>
+                    index % 2 === 0 ? char.toUpperCase() : char.toLowerCase()
+                ).join('');
+
+            case 'spaced':
+                // S P A C E D
+                return text.toUpperCase().split('').join(' ');
+
+            case 'wide':
+                // Full-width characters (Ｗ Ｉ Ｄ Ｅ)
+                return text.toUpperCase().split('').map(char => {
+                    const code = char.charCodeAt(0);
+                    // Convert ASCII to full-width
+                    if (code >= 33 && code <= 126) {
+                        return String.fromCharCode(code + 65248);
+                    }
+                    return char;
+                }).join('');
+
+            case 'normal':
+                // Keep original case
+                return text;
+
+            case 'uppercase':
+            default:
+                // Standard uppercase (default behavior)
+                return text.toUpperCase();
+        }
     }
 
     /**
@@ -170,6 +391,7 @@ export class WarezGenerator {
     buildBanner(textLines, style, options) {
         const lines = [];
         const innerWidth = this.bannerWidth - 2; // Account for border characters
+        const textEffect = options.textEffect || 'uppercase';
 
         // Top border
         lines.push(this.createTopBorder(style));
@@ -182,7 +404,7 @@ export class WarezGenerator {
 
         // Main text lines
         textLines.forEach((textLine, index) => {
-            lines.push(this.createTextLine(textLine, style));
+            lines.push(this.createTextLine(textLine, style, false, textEffect));
             // Add spacing between multiple lines
             if (index < textLines.length - 1) {
                 lines.push(this.createEmptyLine(style));
@@ -195,10 +417,10 @@ export class WarezGenerator {
         // Credits section if enabled
         if (options.addCredits && options.credits) {
             lines.push(this.createSeparatorLine(style));
-            lines.push(this.createTextLine(options.credits, style, true)); // Small text
+            lines.push(this.createTextLine(options.credits, style, true, textEffect)); // Small text
             if (options.addDate) {
                 const dateStr = new Date().toISOString().split('T')[0];
-                lines.push(this.createTextLine(dateStr, style, true));
+                lines.push(this.createTextLine(dateStr, style, true, 'normal')); // Keep date normal
             }
             lines.push(this.createEmptyLine(style));
         }
@@ -277,11 +499,14 @@ export class WarezGenerator {
      * @param {string} text - Text content
      * @param {Object} style - Style data
      * @param {boolean} isSmall - Use smaller text
+     * @param {string} textEffect - Text effect to apply
      * @returns {string} Text line
      */
-    createTextLine(text, style, isSmall = false) {
+    createTextLine(text, style, isSmall = false, textEffect = 'uppercase') {
         const innerWidth = this.bannerWidth - 2;
-        const cleanText = text.trim().toUpperCase();
+
+        // Apply text effect
+        const cleanText = this.applyTextEffect(text.trim(), textEffect);
 
         // Center the text
         const padding = Math.max(0, Math.floor((innerWidth - cleanText.length) / 2));
