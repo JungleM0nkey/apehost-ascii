@@ -6,6 +6,7 @@
 import { Config, ColorPalettes } from './config.js';
 import { TextGenerator } from './generators/text.js';
 import { ImageGenerator } from './generators/image.js';
+import { WarezGenerator } from './generators/warez.js';
 import { ExportManager } from './utils/export.js';
 import { clipboard } from './utils/clipboard.js';
 
@@ -73,10 +74,13 @@ class AsciiArtApp {
         try {
             // Text generator
             this.state.generators.set('text', new TextGenerator());
-            
+
             // Image generator
             this.state.generators.set('image', new ImageGenerator());
-            
+
+            // Warez banner generator
+            this.state.generators.set('banner', new WarezGenerator());
+
             // Other generators can be loaded dynamically when needed
             console.log('Generators initialized');
         } catch (error) {
@@ -116,6 +120,10 @@ class AsciiArtApp {
             // Banner mode
             bannerInput: '#bannerInput',
             bannerStyle: '#bannerStyle',
+            bannerAddCredits: '#bannerAddCredits',
+            bannerAddDate: '#bannerAddDate',
+            bannerCredits: '#bannerCredits',
+            bannerCreditsGroup: '#bannerCreditsGroup',
             generateBannerBtn: '#generateBannerBtn',
             
             // FIGlet mode
@@ -197,6 +205,11 @@ class AsciiArtApp {
         // Banner generation
         this.elements.get('generateBannerBtn').addEventListener('click', () => {
             this.generateBanner();
+        });
+
+        // Banner options
+        this.elements.get('bannerAddCredits').addEventListener('change', (e) => {
+            this.toggleBannerCredits(e.target.checked);
         });
 
         // FIGlet generation
@@ -480,8 +493,29 @@ class AsciiArtApp {
     async generateBanner() {
         try {
             this.setGenerating(true);
-            this.updateStatus('Banner generation coming soon!');
-            this.showError('Banner generator is not yet implemented. Coming soon!');
+
+            const text = this.elements.get('bannerInput').value.trim();
+            const style = this.elements.get('bannerStyle').value;
+            const addCredits = this.elements.get('bannerAddCredits').checked;
+            const addDate = this.elements.get('bannerAddDate').checked;
+            const credits = this.elements.get('bannerCredits').value.trim() || 'ASCII ART STUDIO';
+
+            if (!text) {
+                throw new Error('Please enter banner text');
+            }
+
+            const generator = this.state.generators.get('banner');
+            const result = await generator.generate(text, {
+                style,
+                addCredits,
+                addDate,
+                credits,
+                multiline: text.includes('|')
+            });
+
+            this.displayOutput(result);
+            this.updateStatus('Banner generated successfully');
+
         } catch (error) {
             console.error('Banner generation failed:', error);
             this.showError(error.message);
@@ -563,6 +597,18 @@ class AsciiArtApp {
         }
 
         return true;
+    }
+
+    /**
+     * Toggle banner credits input visibility
+     */
+    toggleBannerCredits(show) {
+        const creditsGroup = this.elements.get('bannerCreditsGroup');
+        if (show) {
+            creditsGroup.classList.remove('hidden');
+        } else {
+            creditsGroup.classList.add('hidden');
+        }
     }
 
     /**

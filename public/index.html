@@ -98,7 +98,7 @@
                 <p class="mode-card__description">Transform images into ASCII art representations</p>
             </div>
             
-            <div class="mode-card mode-card--disabled" data-mode="banner" role="tab" aria-selected="false" aria-controls="banner-panel" tabindex="-1" aria-disabled="true">
+            <div class="mode-card" data-mode="banner" role="tab" aria-selected="false" aria-controls="banner-panel" tabindex="0">
                 <div class="mode-card__icon">[B]</div>
                 <h3 class="mode-card__title">Warez Banner</h3>
                 <p class="mode-card__description">Create retro-style warez scene banners</p>
@@ -216,8 +216,11 @@
                 <div id="banner-panel" class="mode-content hidden" role="tabpanel" aria-labelledby="banner-mode">
                     <div class="form-group form-group--primary">
                         <input type="text" id="bannerInput" class="form-input form-input--large" placeholder="Banner text..." maxlength="50">
+                        <div class="form-hint">
+                            Use | to separate lines. Example: "WAREZ SCENE | 2025"
+                        </div>
                     </div>
-                    
+
                     <div class="controls-row">
                         <div class="control-group">
                             <label for="bannerStyle" class="control-label">Style</label>
@@ -230,7 +233,27 @@
                             </select>
                         </div>
                     </div>
-                    
+
+                    <div class="controls-row controls-row--options">
+                        <div class="option-group">
+                            <label class="option-label">
+                                <input type="checkbox" id="bannerAddCredits" class="option-input">
+                                <span class="option-text">Add Credits</span>
+                            </label>
+                        </div>
+                        <div class="option-group">
+                            <label class="option-label">
+                                <input type="checkbox" id="bannerAddDate" class="option-input">
+                                <span class="option-text">Add Date</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="bannerCreditsGroup" class="control-group hidden">
+                        <label for="bannerCredits" class="control-label">Credits Text</label>
+                        <input type="text" id="bannerCredits" class="form-input form-input--compact" placeholder="e.g., YOUR GROUP NAME" maxlength="30" value="ASCII ART STUDIO">
+                    </div>
+
                     <button id="generateBannerBtn" class="btn btn--primary btn--generate">
                         <span class="btn__icon">[G]</span>
                         <span class="btn__text">Generate</span>
