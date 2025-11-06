@@ -10,11 +10,20 @@
     "start": "npm run dev",
     "deploy": "wrangler deploy --env production",
     "preview": "wrangler dev --local",
-    "lint": "echo 'No linting configured'",
-    "test": "echo 'No tests configured'",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{js,json,css,md}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "build": "echo 'No build step required for static assets'",
-    "clean": "rm -rf dist/ node_modules/.cache/",
-    "logs": "wrangler tail --env production"
+    "clean": "rm -rf dist/ node_modules/.cache/ coverage/",
+    "logs": "wrangler tail --env production",
+    "audit": "npm audit --production",
+    "audit:fix": "npm audit fix",
+    "precommit": "npm run lint && npm run format:check && npm run test"
   },
   "keywords": [
     "ascii-art",
@@ -35,7 +44,16 @@
   },
   "homepage": "https://ascii-art-studio.pages.dev",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@testing-library/dom": "^10.4.1",
+    "@vitest/ui": "^4.0.7",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^20.0.10",
+    "jsdom": "^27.1.0",
+    "prettier": "^3.6.2",
     "serve": "^14.2.1",
+    "vitest": "^4.0.7",
     "wrangler": "^4.30.0"
   },
   "dependencies": {
