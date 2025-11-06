@@ -1,0 +1,21 @@
+name = "apehost-ascii"
+main = "workers-site/index.js"
+compatibility_date = "2024-09-01"
+# account_id is read from environment or Wrangler auth - not committed to git
+
+# Workers Sites configuration
+[site]
+bucket = "./public"
+
+# Production environment
+[env.production]
+name = "apehost-ascii-production"
+routes = [
+  { pattern = "ascii.apehost.net/*", zone_name = "apehost.net" }
+]
+vars = { ENVIRONMENT = "production" }
+
+# Staging environment (optional)
+[env.staging]
+name = "apehost-ascii-staging"
+vars = { ENVIRONMENT = "staging" }
