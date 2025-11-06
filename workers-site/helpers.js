@@ -15,12 +15,12 @@ export function generateNonce() {
 
 /**
  * Inject nonce into HTML content
- * @param {ReadableStream} body - Response body
+ * @param {Response} response - Response object
  * @param {string} nonce - Generated nonce
  * @returns {Promise<string>} Modified HTML
  */
-export async function injectNonce(body, nonce) {
-  const text = await body.text();
+export async function injectNonce(response, nonce) {
+  const text = await response.text();
 
   // Inject nonce into script tags
   let modified = text.replace(

@@ -91,7 +91,7 @@ async function handleEvent(event) {
     // For HTML files, inject nonce into CSP and script tags
     const contentType = page.headers.get('content-type') || ''
     if (contentType.includes('text/html')) {
-      responseBody = await injectNonce(page.body, nonce)
+      responseBody = await injectNonce(page, nonce)
     }
 
     const response = new Response(responseBody, page)
