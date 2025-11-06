@@ -33,7 +33,11 @@ class AsciiArtApp {
             originalPosition: { x: 0, y: 0 },
             originalSize: { width: 0, height: 0 }
         };
-        
+
+        // Bound event handlers for cleanup (prevent memory leaks)
+        this.boundModalMouseMove = null;
+        this.boundModalMouseUp = null;
+
         this.init();
     }
 
@@ -572,18 +576,29 @@ class AsciiArtApp {
             if (!this.validateImageFile(file)) {
                 return;
             }
-            
+
             // Show preview
-            const url = URL.createObjectURL(file);
             const preview = this.elements.get('previewImage');
+
+            // Revoke previous URL if exists to prevent memory leak
+            if (preview.src && preview.src.startsWith('blob:')) {
+                URL.revokeObjectURL(preview.src);
+            }
+
+            const url = URL.createObjectURL(file);
             preview.src = url;
             preview.classList.remove('hidden');
-            
+
+            // Revoke URL after image loads to free memory
+            preview.onload = () => {
+                URL.revokeObjectURL(url);
+            };
+
             // Enable generate button
             this.elements.get('generateImageBtn').disabled = false;
-            
+
             this.updateStatus('Image loaded - ready to generate');
-            
+
         } catch (error) {
             console.error('Image handling failed:', error);
             this.showError('Failed to load image');
@@ -923,11 +938,19 @@ class AsciiArtApp {
     closeModal() {
         const modal = this.elements.get('fullscreenModal');
         const modalContent = this.elements.get('modalContent');
-        
+
         // Reset modal state
         this.modalState.isDragging = false;
         this.modalState.isResizing = false;
-        
+
+        // Remove event listeners to prevent memory leaks
+        if (this.boundModalMouseMove) {
+            document.removeEventListener('mousemove', this.boundModalMouseMove);
+        }
+        if (this.boundModalMouseUp) {
+            document.removeEventListener('mouseup', this.boundModalMouseUp);
+        }
+
         // Reset modal appearance
         modalContent.style.position = '';
         modalContent.style.left = '';
@@ -937,7 +960,7 @@ class AsciiArtApp {
         modalContent.style.margin = '';
         modalContent.style.cursor = '';
         modalContent.classList.remove('modal__content--dragging', 'modal__content--resizing');
-        
+
         modal.classList.remove('modal--visible');
         modal.setAttribute('aria-hidden', 'true');
     }
@@ -1156,19 +1179,23 @@ class AsciiArtApp {
             this.startResizing(e);
         });
 
-        // Global mouse events
-        document.addEventListener('mousemove', (e) => {
+        // Create bound event handlers that can be removed later
+        this.boundModalMouseMove = (e) => {
             if (this.modalState.isDragging) {
                 this.handleDragging(e);
             } else if (this.modalState.isResizing) {
                 this.handleResizing(e);
             }
-        });
+        };
 
-        document.addEventListener('mouseup', () => {
+        this.boundModalMouseUp = () => {
             this.stopDragging();
             this.stopResizing();
-        });
+        };
+
+        // Add global mouse events
+        document.addEventListener('mousemove', this.boundModalMouseMove);
+        document.addEventListener('mouseup', this.boundModalMouseUp);
     }
 
     /**

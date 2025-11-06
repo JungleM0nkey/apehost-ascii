@@ -1,4 +1,5 @@
-import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler'
+import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler';
+import { generateNonce, injectNonce, checkRateLimit } from './helpers.js';
 
 /**
  * The DEBUG flag will do two things that help during development:
@@ -8,6 +9,20 @@ import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler'
  *    than the default 404.html page.
  */
 const DEBUG = false
+
+/**
+ * Cache TTL configuration
+ */
+const CACHE_TTL = DEBUG ? 0 : 86400 // 24 hours in production, no cache in debug
+
+/**
+ * Rate limiting configuration
+ */
+const RATE_LIMIT = {
+  enabled: !DEBUG,
+  maxRequests: 100, // per window
+  windowMs: 60000,  // 1 minute
+}
 
 addEventListener('fetch', event => {
   try {
@@ -26,6 +41,23 @@ addEventListener('fetch', event => {
 
 async function handleEvent(event) {
   const url = new URL(event.request.url)
+  const clientIP = event.request.headers.get('CF-Connecting-IP')
+
+  // Rate limiting check
+  if (RATE_LIMIT.enabled) {
+    const rateLimitResult = await checkRateLimit(clientIP, RATE_LIMIT)
+    if (!rateLimitResult.allowed) {
+      return new Response('Too Many Requests', {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil(RATE_LIMIT.windowMs / 1000).toString(),
+          'X-RateLimit-Limit': RATE_LIMIT.maxRequests.toString(),
+          'X-RateLimit-Remaining': '0',
+        }
+      })
+    }
+  }
+
   let options = {}
 
   /**
@@ -40,18 +72,58 @@ async function handleEvent(event) {
       options.cacheControl = {
         bypassCache: true,
       }
+    } else {
+      // Enable caching in production
+      options.cacheControl = {
+        browserTTL: CACHE_TTL,
+        edgeTTL: CACHE_TTL,
+      }
     }
-    
+
     const page = await getAssetFromKV(event, options)
 
-    // allow headers to be altered
-    const response = new Response(page.body, page)
+    // Generate nonce for CSP
+    const nonce = generateNonce()
 
+    // allow headers to be altered
+    let responseBody = page.body
+
+    // For HTML files, inject nonce into CSP and script tags
+    const contentType = page.headers.get('content-type') || ''
+    if (contentType.includes('text/html')) {
+      responseBody = await injectNonce(page.body, nonce)
+    }
+
+    const response = new Response(responseBody, page)
+
+    // Security headers
     response.headers.set('X-XSS-Protection', '1; mode=block')
     response.headers.set('X-Content-Type-Options', 'nosniff')
     response.headers.set('X-Frame-Options', 'DENY')
-    response.headers.set('Referrer-Policy', 'unsafe-url')
-    response.headers.set('Feature-Policy', 'none')
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+
+    // Enhanced CSP with nonce (no unsafe-inline!)
+    const cspValue = `
+      default-src 'self';
+      script-src 'self' 'nonce-${nonce}';
+      style-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;
+      img-src 'self' data: blob:;
+      connect-src 'self';
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    `.replace(/\s+/g, ' ').trim()
+
+    response.headers.set('Content-Security-Policy', cspValue)
+
+    // Caching headers
+    if (!DEBUG) {
+      response.headers.set('Cache-Control', `public, max-age=${CACHE_TTL}`)
+      response.headers.set('CDN-Cache-Control', `max-age=${CACHE_TTL * 365}`)
+    }
 
     return response
 

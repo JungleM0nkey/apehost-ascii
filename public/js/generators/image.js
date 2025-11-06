@@ -66,10 +66,10 @@ export class ImageGenerator {
     async loadImage(source) {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            
+
             img.onload = () => resolve(img);
             img.onerror = () => reject(new Error('Failed to load image'));
-            
+
             if (source instanceof File) {
                 const reader = new FileReader();
                 reader.onload = (e) => img.src = e.target.result;
@@ -78,7 +78,14 @@ export class ImageGenerator {
             } else if (typeof source === 'string') {
                 img.src = source;
             } else if (source instanceof HTMLImageElement) {
-                resolve(source);
+                // Fix race condition: check if image is already loaded
+                if (source.complete && source.naturalHeight !== 0) {
+                    resolve(source);
+                } else {
+                    // Wait for load if not complete
+                    source.onload = () => resolve(source);
+                    source.onerror = () => reject(new Error('Failed to load image'));
+                }
             } else {
                 reject(new Error('Invalid image source'));
             }
