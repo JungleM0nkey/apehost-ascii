@@ -62,7 +62,7 @@ describe('TextGenerator', () => {
     });
 
     it('should throw error for empty text', async () => {
-      await expect(generator.generate('')).rejects.toThrow('Input cannot be empty');
+      await expect(generator.generate('')).rejects.toThrow('Input must be a non-empty string');
     });
 
     it('should throw error for text exceeding max length', async () => {
